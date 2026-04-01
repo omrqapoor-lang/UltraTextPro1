@@ -5,23 +5,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          
       - name: Install Cordova
         run: npm install -g cordova
-      - name: Prepare Workspace
+        
+      - name: Fix Directory Structure
         run: |
+          # إنشاء المجلد المطلوب للمحرك
           mkdir -p www
-          # نقل الملفات إلى مجلد www إذا كانت مبعثرة بالخارج لتجنب فشل Cordova
-          [ -f index.html ] && mv index.html www/ || echo "index.html already in www"
+          # نقل أي ملف html أو assets موجود في الخارج إلى داخل www تلقائياً
+          find . -maxdepth 1 -name "*.html" -exec mv {} www/ \;
+          find . -maxdepth 1 -name "*.js" -exec mv {} www/ \;
+          find . -maxdepth 1 -name "*.css" -exec mv {} www/ \;
+          [ -d assets ] && mv assets www/ || echo "No assets folder found"
+          
       - name: Build APK
         run: |
           cordova telemetry off
+          # إضافة المنصة وتجاهل نقص الأيقونات
           cordova platform add android@12 --nosave
           cordova build android --debug -- --packageType=apk
+          
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: UltraTextPro-App
           path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
