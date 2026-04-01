@@ -10,6 +10,11 @@ jobs:
           node-version: 20
       - name: Install Cordova
         run: npm install -g cordova
+      - name: Prepare Workspace
+        run: |
+          mkdir -p www
+          # نقل الملفات إلى مجلد www إذا كانت مبعثرة بالخارج لتجنب فشل Cordova
+          [ -f index.html ] && mv index.html www/ || echo "index.html already in www"
       - name: Build APK
         run: |
           cordova telemetry off
