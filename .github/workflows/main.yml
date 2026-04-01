@@ -12,7 +12,6 @@ jobs:
         run: npm install -g cordova
       - name: Build APK
         run: |
-          npm install -g cordova
           cordova telemetry off
           cordova platform add android@12 --nosave
           cordova build android --debug -- --packageType=apk
