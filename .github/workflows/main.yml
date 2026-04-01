@@ -7,35 +7,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      # 1. حل مشكلة Node.js (استخدام إصدار 24 لإيقاف التنبيهات)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           
+      # 2. تثبيت Java (ضروري جداً لبناء الأندرويد)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
       - name: Install Cordova
         run: npm install -g cordova
         
-      - name: Fix Everything
+      - name: Fix Directory Structure
         run: |
-          # 1. إجبار وجود مجلد www ونقل الملفات إليه
           mkdir -p www
           find . -maxdepth 1 -type f -not -name ".*" -not -name "package.json" -not -name "config.xml" -exec mv {} www/ \;
-          
-          # 2. تنظيف ملف config.xml من أي استدعاءات لصور غير موجودة
+          # تنظيف ملف الإعدادات من الصور المفقودة
           sed -i '/<icon/d' config.xml
           sed -i '/<splash/d' config.xml
-          
-          # 3. التأكد من وجود ملف index.html (حتى لو فارغ) لمنع انهيار Cordova
-          if [ ! -f www/index.html ]; then echo "<html><body><h1>Ready</h1></body></html>" > www/index.html; fi
           
       - name: Build APK
         run: |
           cordova telemetry off
           cordova platform add android@12 --nosave
+          # بناء APK بدون الحاجة لتوقيع يدوي حالياً
           cordova build android --debug -- --packageType=apk
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Final-App-Build
+          name: UltraText-Final-App
           path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
