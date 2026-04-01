@@ -1,38 +1,38 @@
 name: Build Android APK
 on: [push, pull_request]
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Node.js 24
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20 # العودة للإصدار المستقر لإيقاف التنبيهات القسرية
           
       - name: Install Cordova
         run: npm install -g cordova
         
-      - name: Force Directory Sync
+      - name: Auto-Fix Project Files
         run: |
+          # 1. تنظيم مجلد www
           mkdir -p www
-          # نقل أي ملفات ضالة إلى مجلد www لضمان وجود index.html في مكانه
           find . -maxdepth 1 -type f -not -name ".*" -not -name "package.json" -not -name "config.xml" -exec mv {} www/ \;
+          
+          # 2. حذف أسطر الأيقونات والـ splash من config.xml برمجياً لتجنب خطأ "الملف مفقود"
+          sed -i '/<icon/d' config.xml
+          sed -i '/<splash/d' config.xml
           
       - name: Build APK
         run: |
           cordova telemetry off
           cordova platform add android@12 --nosave
-          # بناء التطبيق مع تجاهل أخطاء التوقيع والأيقونات
           cordova build android --debug -- --packageType=apk
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: UltraText-Final-App
+          name: UltraText-Final-Build
           path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
